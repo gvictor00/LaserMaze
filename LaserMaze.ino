@@ -17,6 +17,17 @@
 #define input_rfid_inicio 5
 #define input_rfid_final  6
 
+// Sensores analógicos
+#define sensor1 A0
+#define sensor2 A1
+#define sensor3 A2
+
+int leitura_sensor1 = 0;
+int leitura_sensor2 = 0;
+int leitura_sensor3 = 0;
+
+int i = 0;
+
 void setup() {
   Serial.begin(9600);
   Serial.println("Inicializando pinos...");
@@ -32,10 +43,38 @@ void setup() {
   digitalWrite(rele_alarme,   LOW); // Inicia o relê desligado
   digitalWrite(rele_teclado,  LOW); // Inicia o relê desligado
 
-  Serial.println("Setup de pinos finalizado...");
+  Serial.println("Setup de pinos finalizado.");
+  Serial.println("======================");
+  Serial.println("Calibrando sensores...");
+  Serial.println("======================");
+
+  digitalWrite(rele_laser, HIGH);   // Liga os lasers
+  delay(100);
+  for(i = 0; i < 50; i++)
+  {
+    Serial.print(".");
+    leitura_sensor1 += analogRead(sensor1);
+    leitura_sensor2 += analogRead(sensor2);
+    leitura_sensor3 += analogRead(sensor3);
+    delay(100);
+  }
+
+  leitura_sensor1 /= 50;
+  leitura_sensor2 /= 50;
+  leitura_sensor3 /= 50;
   
-  delay(2000);
-  Serial.println("Inicializando programa!");
+  Serial.println();
+
+  Serial.print("Sensor #1: ");
+  Serial.println(leitura_sensor1);
+  Serial.print("Sensor #2: ");
+  Serial.println(leitura_sensor2);
+  Serial.print("Sensor #3: ");
+  Serial.println(leitura_sensor3);
+  
+  Serial.println("======================");
+  Serial.println("Sensores calibrados!!!");
+  Serial.println("======================");
 }
 
 void loop() {
