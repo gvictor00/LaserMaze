@@ -31,14 +31,14 @@ int leitura_rfid_inicio = 0;
 int leitura_rfid_final = 0;
 
 bool inicio = true;
-bool bateuSensor = false;
+bool bateuSensor = true;
 
 // Limiar de luminosidade para considerar que "bateu" no laser.
 int limiarSensores = 300;
 
 // Leitura sensores - número de leituras para evitar ruido
-int leiturasSensor = 50
-int i = 0;
+int leiturasSensor = 10
+                     int i = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -62,18 +62,18 @@ void setup() {
 
   digitalWrite(rele_laser, HIGH);   // Liga os lasers
   delay(100);
-  for (i = 0; i < leiturasSensor; i++)
+  for (i = 0; i < leiturasSensor * 10; i++)
   {
     Serial.print(".");
     leitura_sensor1 += analogRead(sensor1);
     leitura_sensor2 += analogRead(sensor2);
     leitura_sensor3 += analogRead(sensor3);
-    delay(100);
+    delay(10);
   }
 
-  leitura_sensor1 /= leiturasSensor;
-  leitura_sensor2 /= leiturasSensor;
-  leitura_sensor3 /= leiturasSensor;
+  leitura_sensor1 /= leiturasSensor * 10;
+  leitura_sensor2 /= leiturasSensor * 10;
+  leitura_sensor3 /= leiturasSensor * 10;
 
   Serial.println();
 
@@ -90,48 +90,55 @@ void setup() {
 }
 
 void loop() {
-  if (inicio == true) // Lê o rfid do inicio
+
+  if (aguardaInicio == true) // Lê o rfid do inicio
   {
     leitura_rfid_inicio = digitalRead(input_rfid_inicio);
+
     if (leitura_rfid_inicio == 1)
     {
-      inicio = false;
+      // Para de aguardar o primeiro totem
+      aguardaInicio = false;
 
-      if (bateuSensor == true)
-      {
-        // Liga o rele dos lasers
-        digitalWrite(rele_laser, HIGH);
+      // Liga o rele dos lasers
+      digitalWrite(rele_laser, HIGH);
 
-        // Desliga a sirene/girflex
-        digitalWrite(rele_sirene, LOW);
-      }
+      // Desliga a sirene/girflex
+      digitalWrite(rele_sirene, LOW);
     }
   }
   else // Lê os sensores dos lasers
   {
-    for (i = 0; i < leiturasSensor; i++) {
-      leitura_sensor1 = analogRead(sensor1);
-      leitura_sensor2 = analogRead(sensor2);
-      leitura_sensor3 = analogRead(sensor3);
+    leitura_rfid_final = digitalRead(input_rfid_final);
 
-      leitura_sensor1 /= leiturasSensor;
-      leitura_sensor2 /= leiturasSensor;
-      leitura_sensor3 /= leiturasSensor;
-    }
-
-    if (leitura_sensor1 <= limiarSensor || leitura_sensor2 <= limiarSensor || leitura_sensor3 <= limiarSensor)
+    if (leitura_rfid_inicio == 1)
     {
-      // Aciona flag de batida no sensor
-      bateuSensor = true;
+      // Fim de jogo!
+    }
+    else
+    {
+      for (i = 0; i < leiturasSensor; i++) {
+        leitura_sensor1 += analogRead(sensor1);
+        leitura_sensor2 += analogRead(sensor2);
+        leitura_sensor3 += analogRead(sensor3);
 
-      // Desliga o rele dos lasers
-      digitalWrite(rele_laser, LOW);
+        leitura_sensor1 /= leiturasSensor;
+        leitura_sensor2 /= leiturasSensor;
+        leitura_sensor3 /= leiturasSensor;
+        delay(1);
+      }
 
-      // Liga a sirene/girflex
-      digitalWrite(rele_sirene, HIGH);
+      if (leitura_sensor1 <= limiarSensor || leitura_sensor2 <= limiarSensor || leitura_sensor3 <= limiarSensor)
+      {
+        // Aciona flag de batida no sensor
+        aguardaInicio = true;
+
+        // Desliga o rele dos lasers
+        digitalWrite(rele_laser, LOW);
+
+        // Liga a sirene/girflex
+        digitalWrite(rele_sirene, HIGH);
+      }
     }
   }
-
-
-
 }
